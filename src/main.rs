@@ -82,6 +82,9 @@ pub fn main() {
     let game_over_text = texture_creator
         .load_texture("assets/sprites/gameover.png")
         .unwrap();
+    let game_over_text_query = game_over_text.query();
+    let game_over_text_width = scale_scalar(game_over_text_query.width as i32, SCALE);
+    let game_over_text_height = scale_scalar(game_over_text_query.height as i32, SCALE);
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
@@ -115,7 +118,11 @@ pub fn main() {
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
 
     let mut font = ttf_context
-        .load_font("assets/fonts/FlappybirdyRegular.ttf", 64)
+        .load_font("assets/fonts/arial.ttf", 32)
+        .unwrap();
+
+    let mut big_font = ttf_context
+        .load_font("assets/fonts/arial.ttf", 64)
         .unwrap();
 
     'main_loop: loop {
@@ -137,6 +144,13 @@ pub fn main() {
                     }
                     if let GameState::Running = game_state {
                         player.jump()
+                    }
+                    if let GameState::GameOver = game_state {
+                        player = Player::new((HEIGHT - scale_scalar(ground.query().height as i32, SCALE)) / 2 - bird_height / 2);
+                        pipes = Vec::new();
+                        pipes.push(Pipe::new(WIDTH * 2, HEIGHT / 2 - HOLE_HEIGHT / 2));
+                        score = 0;
+                        game_state = GameState::BeforeStart;
                     }
                 }
                 _ => {}
@@ -226,6 +240,17 @@ pub fn main() {
             );
             canvas.copy(&title_screen, None, title_screen_rect).unwrap();
         }
+        if let GameState::GameOver = game_state {
+            let game_over_text_rect = Rect::new(
+                w / 2 - game_over_text_width / 2,
+                200,
+                game_over_text_width as u32,
+                game_over_text_height as u32,
+            );
+            canvas.copy(&game_over_text, None, game_over_text_rect).unwrap();
+
+            draw_text(&mut canvas, &font, "press 'space' to play again", Color::BLACK, w / 2, 500, true).unwrap();
+        }
         canvas
             .copy_ex(
                 sprite,
@@ -249,7 +274,7 @@ pub fn main() {
         canvas.copy(&ground, None, ground_rect).unwrap();
 
         // Display the current score
-        if let GameState::Running = game_state {
+        if !matches!(game_state, GameState::BeforeStart) {
             let digits = score
                 .to_string()
                 .chars()
@@ -311,7 +336,6 @@ pub fn main() {
             }
         }
 
-        //   draw_text(&mut canvas, &font, "hello world", Color::BLACK, 50, 50).unwrap();
         canvas.present();
 
         // Update game state

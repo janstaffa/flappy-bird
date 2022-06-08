@@ -12,7 +12,7 @@ pub fn scale_scalar(scalar: i32, scale: f32) -> i32 {
     return (scalar as f32 * scale) as i32;
 }
 
-pub const HOLE_HEIGHT: i32 = 300;
+pub const HOLE_HEIGHT: i32 = 150;
 pub const SPACE_BETWEEN_PIPES: i32 = 300;
 
 #[derive(Debug)]
@@ -35,7 +35,7 @@ impl Pipe {
 }
 
 pub const GRAVITY: i32 = -6;
-const JUMP_FORCE: i32 = 10;
+const JUMP_FORCE: i32 = 12;
 
 #[derive(Debug)]
 pub struct Player {
@@ -96,8 +96,9 @@ pub fn draw_text(
     font: &Font,
     text: &str,
     color: Color,
-    x: i32,
+    mut x: i32,
     y: i32,
+    center: bool
 ) -> Result<(), String> {
     let surface = font.render(text).solid(color).map_err(|e| e.to_string())?;
 
@@ -108,6 +109,9 @@ pub fn draw_text(
 
     let TextureQuery { width, height, .. } = texture.query();
 
+    if center {
+        x = x - width as i32 / 2;
+    }
     let target = Rect::new(x, y, width, height);
 
     canvas.copy(&texture, None, target)?;
